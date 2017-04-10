@@ -1,0 +1,27 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="text_size_bar_title">20sp</dimen>
+    <dimen name="text_size_addToCart">12sp</dimen>
+    <dimen name="text_size_description">18sp</dimen>
+    <dimen name="text_size_cartDetail_label">18sp</dimen>
+    <dimen name="text_size_checkout_button">20sp</dimen>
+    <dimen name="text_size_currency_field">18sp</dimen>
+
+    <dimen name="activity_horizontal_margin">10dp</dimen>
+    <dimen name="activity_vertical_margin">5dp</dimen>
+
+    <dimen name="product_img_width">100dp</dimen>
+    <dimen name="product_img_height">100dp</dimen>
+    <dimen name="cartDetail_label_height">40dp</dimen>
+    <dimen name="cartDetail_productField_width">150dp</dimen>
+    <dimen name="currency_cate_width">90dp</dimen>
+    <dimen name="currency_cate_height">50dp</dimen>
+
+    <dimen name="button_addToCart_width">60dp</dimen>
+    <dimen name="button_removeFromCart_height">40dp</dimen>
+    <dimen name="button_margint">10dp</dimen>
+    <dimen name="button_deleteItem_height">40dp</dimen>
+    <dimen name="button_checkout_height">60dp</dimen>
+    <dimen name="button_modify_quantity_width">30dp</dimen>
+    <dimen name="button_modify_quantity_height">40dp</dimen>
+</resources>

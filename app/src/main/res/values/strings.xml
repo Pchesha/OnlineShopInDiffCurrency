@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">INGAssignment</string>
+    <string name="mainActivity_name">ING Online Shop</string>
+    <string name="cart_detail_label">My Cart</string>
+    <string-array name="productList">
+        <item>Peas(per bag)</item>
+        <item>Eggs(per dozen)</item>
+        <item>Beans(per can)</item>
+        <item>Milk(per bottle)</item>
+    </string-array>
+    <string-array name="productPriceList">
+        <item>0.95</item>
+        <item>2.1</item>
+        <item>0.73</item>
+        <item>1.4</item>
+    </string-array>
+
+    <string name="cartDetail_PName_Field">Product</string>
+    <string name="cartDetail_PQuantity_Field">Quantity</string>
+    <string name="addToCart">Add to Cart</string>
+    <string name="removeFromCart">Remove</string>
+    <string name="totalPriceField">Total Price: </string>
+    <string name="checkout">Checkout</string>
+    <string name="currency_cate_field">Choose Currency:</string>
+    <string name="default_currency">EUR</string>
+
+
+</resources>

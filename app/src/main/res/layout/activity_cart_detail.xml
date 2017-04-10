@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_cart_detail"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.example.ingassignment.CartDetailActivity">
+
+    <include layout="@layout/toolbar_layout"/>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_height="@dimen/cartDetail_label_height"
+        android:layout_width="match_parent"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:layout_gravity="center">
+        <TextView
+            android:layout_width="@dimen/cartDetail_productField_width"
+            android:layout_height="wrap_content"
+            android:text="@string/cartDetail_PName_Field"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textSize="@dimen/text_size_cartDetail_label"
+            android:textColor="@color/colorPrimary"
+            android:layout_weight="2" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cartDetail_PQuantity_Field"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textSize="@dimen/text_size_cartDetail_label"
+            android:textColor="@color/colorPrimary"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="@dimen/button_modify_quantity_width"
+            android:layout_height="@dimen/button_deleteItem_height"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:clickable="false"
+        android:background="@android:color/darker_gray"/>
+
+
+    <LinearLayout android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:orientation="vertical"
+        android:layout_weight="1">
+        <include layout="@layout/content_main"/>
+        </LinearLayout>
+
+    <LinearLayout android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:gravity="bottom"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_height="@dimen/currency_cate_height"
+            android:layout_width="wrap_content"
+            android:orientation="horizontal"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:layout_gravity="left">
+            <TextView
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                android:gravity="center_vertical"
+                android:textColor="@color/colorPrimary"
+                android:text="@string/currency_cate_field"
+                android:textSize="@dimen/text_size_currency_field"/>
+            <Spinner android:id="@+id/currency_cate_spinner"
+                android:layout_height="match_parent"
+                android:layout_width="@dimen/currency_cate_width"
+                android:gravity="center_vertical"
+                android:textAlignment="center"
+                android:textSize="@dimen/text_size_description"></Spinner>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_gravity="right|bottom"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:orientation="horizontal" >
+            <TextView
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="@string/totalPriceField"
+                android:textColor="@color/colorPrimary"
+                android:textSize="@dimen/text_size_description"/>
+            <TextView android:id="@+id/currency_cate"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="@string/default_currency"
+                android:textColor="@color/colorPrimary"
+                android:textSize="@dimen/text_size_description" />
+            <TextView android:id="@+id/totalPrice"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:textColor="@color/colorPrimary"
+                android:textSize="@dimen/text_size_description" />
+        </LinearLayout>
+
+        <Button android:id="@+id/btn_checkout"
+            android:layout_height="@dimen/button_checkout_height"
+            android:layout_width="match_parent"
+            android:layout_gravity="bottom|end"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:text ="@string/checkout"
+            android:textSize="@dimen/text_size_checkout_button"
+            android:textColor="@android:color/white"
+            android:background="@color/colorAccent">
+        </Button>
+    </LinearLayout>
+</LinearLayout>

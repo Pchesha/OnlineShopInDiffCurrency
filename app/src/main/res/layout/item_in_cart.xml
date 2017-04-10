@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:gravity="center_vertical">
+
+    <LinearLayout
+        android:layout_width="@dimen/cartDetail_productField_width"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_weight="1">
+        <ImageView android:id="@+id/productImgInCart"
+            android:layout_height="@dimen/product_img_height"
+            android:layout_width="@dimen/product_img_width"
+            android:layout_weight="1" >
+        </ImageView>
+        <TextView android:id="@+id/descrition_in_cartDetail"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:textColor="@color/colorPrimaryDark"
+            android:textSize="@dimen/text_size_description"
+            android:layout_weight="1" >
+        </TextView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/graey_circle"
+        android:layout_gravity="center_vertical"
+        android:layout_weight="1" >
+        <Button android:id="@+id/btn_quan_decrease"
+            android:gravity="center"
+            android:layout_height="@dimen/button_modify_quantity_height"
+            android:layout_width="@dimen/button_modify_quantity_width"
+            android:text="–"
+            android:layout_weight="1" ></Button>
+        <TextView android:id="@+id/text_quantity"
+            android:layout_height="@dimen/button_modify_quantity_height"
+            android:layout_width="@dimen/button_modify_quantity_width"
+            android:gravity="center"
+            android:textColor="@color/colorPrimary"
+            android:layout_weight="3" ></TextView>
+        <Button android:id="@+id/btn_quan_increase"
+            android:layout_gravity="center"
+            android:layout_height="@dimen/button_modify_quantity_height"
+            android:layout_width="@dimen/button_modify_quantity_width"
+            android:text="+"
+            android:layout_weight="1" ></Button>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/remove_item_button"
+        android:layout_height="@dimen/button_removeFromCart_height"
+        android:layout_width="wrap_content"
+        android:layout_marginLeft="@dimen/button_margint"
+        android:gravity="center"
+        android:text="@string/removeFromCart"
+        android:background="@android:color/holo_red_dark"
+        android:textColor="@android:color/white"
+        android:textAlignment="center"
+        android:textSize="@dimen/text_size_addToCart" >
+    </Button>
+
+</LinearLayout>
