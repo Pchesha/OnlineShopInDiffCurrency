@@ -11,6 +11,7 @@
     <style name="AppTheme.NoActionBar" parent="AppTheme">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:actionMenuTextColor">@android:color/white</item>
     </style>
 
     <style name="AppTheme.Picker" parent="Theme.AppCompat.Light.NoActionBar" >

@@ -23,6 +23,6 @@
     <string name="checkout">Checkout</string>
     <string name="currency_cate_field">Choose Currency:</string>
     <string name="default_currency">EUR</string>
-
+    <string name="notify_network_unavailable">Please turn on network.</string>
 
 </resources>

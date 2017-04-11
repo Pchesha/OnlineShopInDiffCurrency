@@ -1,6 +1,8 @@
 package com.example.ingassignment;
 
+
 import android.util.Log;
+import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -37,7 +39,6 @@ public class CurrencyExchanger extends Thread {
     public boolean isInitial(){ return initial;}
 
     public void run(){
-        initial= true;
         //Log.i(LOG_TAG, "ThreadInfo:" +Thread.currentThread());
         InputStream inputStream = null;
         String result = "";
@@ -51,6 +52,7 @@ public class CurrencyExchanger extends Thread {
             if(inputStream != null) result = convertInputStreamToString(inputStream);
             //Log.i(LOG_TAG, "["+Thread.currentThread()+"] "+result);
             convertStringToJsonObject(result);
+            initial= true;
         } catch(java.io.IOException ioe){;
             ioe.printStackTrace();
         } finally {
@@ -93,5 +95,4 @@ public class CurrencyExchanger extends Thread {
         //Log.i(LOG_TAG,"getCurrencyMap:"+ currencyMap.size());
         return currencyMap;
     }
-
 }

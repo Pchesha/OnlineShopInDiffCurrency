@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -14,6 +16,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,22 +34,23 @@ public class MainActivity extends AppCompatActivity {
 
     private Context mContext;
     private CartChangedReceiver cartChangedReceiver = new CartChangedReceiver();
-    private IntentFilter filter = new IntentFilter(Action_Cart_Changed);
+    private IntentFilter cartFilter = new IntentFilter(Action_Cart_Changed);
+    private IntentFilter networkFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
     Resources res;
     private ListView listView;
     List<ProductItem> product_list = new ArrayList<ProductItem>();
     private ProductListAdapter adapter;
-    HashMap<Integer,Integer> cartMap = new HashMap<Integer,Integer>();
+    HashMap<Integer,Integer> cartMap = new HashMap<Integer,Integer>();//ProductId, Quantity; Use to record Cart data
+    List<ProductItem> cart_list = new ArrayList<ProductItem>();// Use to transfer data to the other activity.
     private MenuItem cartBtn;
+    private int totalItem = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this.getApplicationContext();
         res = mContext.getResources();
-        if(!CurrencyExchanger.getInstance().isInitial()) {
-            CurrencyExchanger.getInstance().start();
-        }
+        actCurrencyRateLoading();
 
         String[] list = res.getStringArray(R.array.productList);
         String[] priceList = res.getStringArray(R.array.productPriceList);
@@ -54,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
             ProductItem item = new ProductItem(i+Product_BaseNumber, list[i], priceList[i]);
             product_list.add(item);
         }
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         TextView toolbarText = (TextView) findViewById(R.id.toolbar_title);
@@ -65,7 +70,8 @@ public class MainActivity extends AppCompatActivity {
         listView = (ListView) findViewById(R.id.product_listview);
         adapter = new ProductListAdapter(mContext, product_list);
         listView.setAdapter(adapter);
-        registerReceiver(cartChangedReceiver, filter);
+        registerReceiver(cartChangedReceiver, cartFilter);
+        registerReceiver(cartChangedReceiver, networkFilter);
     }
 
     @Override
@@ -75,10 +81,32 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if(cart_list.size()>0) outState.putParcelableArrayList("cartList",(ArrayList<ProductItem>) cart_list);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState){
+        super.onRestoreInstanceState(savedInstanceState);
+        cart_list = savedInstanceState.getParcelableArrayList("cartList");
+        if(cart_list != null) syncCartMapFromArrList(cart_list);
+    }
+
+    private void actCurrencyRateLoading(){
+        if(!isNetworkAvailable()) Toast.makeText(mContext, mContext.getResources().getText(R.string.notify_network_unavailable)
+                ,Toast.LENGTH_SHORT).show();
+        else{
+            if(!CurrencyExchanger.getInstance().isInitial()) CurrencyExchanger.getInstance().start();
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         cartBtn = menu.getItem(0);
+        updateTotalOfCart();
         return true;
     }
 
@@ -88,11 +116,10 @@ public class MainActivity extends AppCompatActivity {
         switch (id) {
             case R.id.go_cart_button:
                 Intent intent = new Intent(mContext, CartDetailActivity.class);
-                ArrayList<ProductItem> cart_list = (ArrayList<ProductItem>) arrangeCartList();
-                //Log.i(LOG_TAG, "total cart_list size="+cart_list.size());
-                intent.putParcelableArrayListExtra(Intent_Data_Cart_detail, cart_list);
-                startActivityForResult(intent, REQUEST_CART_RESPONSE);
-                //startActivity(intent);
+                synchronized (cartMap) {
+                    intent.putParcelableArrayListExtra(Intent_Data_Cart_detail, (ArrayList<ProductItem>) cart_list);
+                    startActivityForResult(intent, REQUEST_CART_RESPONSE);
+                }
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -106,29 +133,48 @@ public class MainActivity extends AppCompatActivity {
                 if (data == null || data.getExtras() == null) break;
                 List<ProductItem> list = data.getParcelableArrayListExtra(Intent_Data_Cart_detail);
                 if (list != null) {
-                    cartMap.clear();
-                    for (Iterator it = list.iterator(); it.hasNext(); ) {
-                        ProductItem item = (ProductItem) it.next();
-                        cartMap.put(item.getProductId(), item.getQuantity());
+                    synchronized (cartMap) {
+                        syncCartMapFromArrList(list);
                     }
+                    cart_list = list;
+                    updateTotalOfCart();
                 }
                 break;
         }
     }
 
-    private ArrayList<ProductItem> arrangeCartList(){
-        ArrayList<ProductItem> cart_list = new ArrayList<ProductItem>();
-        for(int key : cartMap.keySet()) {
-            try {
-                ProductItem item = product_list.get(key - Product_BaseNumber);
-                item = item.clone();
-                item.setQuantity(cartMap.get(key));
-                cart_list.add(item);
-            }catch (IndexOutOfBoundsException e){
-                e.printStackTrace();
+    private void syncCartMapFromArrList(List list){
+        synchronized(cartMap) {
+            cartMap.clear();
+            totalItem = 0;
+            for(Iterator it = list.iterator(); it.hasNext(); ) {
+                ProductItem item = (ProductItem) it.next();
+                cartMap.put(item.getProductId(), item.getQuantity());
+                totalItem += item.getQuantity();
             }
         }
-        return cart_list;
+    }
+
+    private void arrangeCartList(){
+        synchronized (cartMap) {
+            cart_list.clear();
+            totalItem = 0;
+            for(int key : cartMap.keySet()) {
+                try {
+                    ProductItem item = product_list.get(key - Product_BaseNumber);
+                    item = item.clone();
+                    item.setQuantity(cartMap.get(key));
+                    totalItem += cartMap.get(key);
+                    cart_list.add(item);
+                } catch (IndexOutOfBoundsException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private void updateTotalOfCart(){
+        cartBtn.setTitle("("+totalItem+")");
     }
 
     public class CartChangedReceiver extends BroadcastReceiver {
@@ -136,14 +182,26 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            //Log.i(LOG_TAG, "onReceive: "+intent.getAction());
-            if (intent.getAction() == Action_Cart_Changed) {
+            Log.i(LOG_TAG, "onReceive: "+intent.getAction());
+            if (intent.getAction().equals(Action_Cart_Changed)) {
                 int productId = intent.getIntExtra(Intent_Data_ProductId, -1);
                 if(productId == -1) return;
                 if(cartMap.containsKey(productId)){
                     cartMap.put(productId,cartMap.get(productId)+1);
                 } else cartMap.put(productId, 1);
+                arrangeCartList();
+                updateTotalOfCart();
+            } else if(intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)){
+                actCurrencyRateLoading();
             }
         }
+    }
+
+    private boolean isNetworkAvailable() {
+        if(mContext == null) return false;
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }
