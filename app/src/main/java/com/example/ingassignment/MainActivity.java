@@ -8,6 +8,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -18,6 +19,20 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,7 +43,8 @@ public class MainActivity extends AppCompatActivity {
     final int REQUEST_CART_RESPONSE = 100;
 
     public final static int Product_BaseNumber = 10001;
-    public final static String Intent_Data_Cart_detail = "action_check_cart";
+    public final static String Intent_Data_Cart_Detail = "data_check_cart";
+    public final static String Intent_Data_Currency_Rate = "data_currency_rate";
     public final static String Action_Cart_Changed = "action_notify_cart_changed";
     public final static String Intent_Data_ProductId = "product_id";
 
@@ -42,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     private ProductListAdapter adapter;
     HashMap<Integer,Integer> cartMap = new HashMap<Integer,Integer>();//ProductId, Quantity; Use to record Cart data
     List<ProductItem> cart_list = new ArrayList<ProductItem>();// Use to transfer data to the other activity.
+    private HashMap<String,Float> currencyMap = new HashMap<String,Float>();//Currency rate list.
     private MenuItem cartBtn;
     private int totalItem = 0;
 
@@ -94,11 +111,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void actCurrencyRateLoading(){
-        if(!isNetworkAvailable()) Toast.makeText(mContext, mContext.getResources().getText(R.string.notify_network_unavailable)
-                ,Toast.LENGTH_SHORT).show();
-        else{
-            if(!CurrencyExchanger.getInstance().isInitial()) CurrencyExchanger.getInstance().start();
-        }
+        if(currencyMap.size()>0) return;
+        if(!isNetworkAvailable())
+            Toast.makeText(mContext, mContext.getResources().getText(R.string.notify_network_unavailable), Toast.LENGTH_SHORT).show();
+        else
+            new CurrencyDownloadTask().execute();
     }
 
     @Override
@@ -116,10 +133,9 @@ public class MainActivity extends AppCompatActivity {
         switch (id) {
             case R.id.go_cart_button:
                 Intent intent = new Intent(mContext, CartDetailActivity.class);
-                synchronized (cartMap) {
-                    intent.putParcelableArrayListExtra(Intent_Data_Cart_detail, (ArrayList<ProductItem>) cart_list);
+                intent.putParcelableArrayListExtra(Intent_Data_Cart_Detail, (ArrayList<ProductItem>) cart_list);
+                intent.putExtra(Intent_Data_Currency_Rate, currencyMap);
                     startActivityForResult(intent, REQUEST_CART_RESPONSE);
-                }
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -131,20 +147,20 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case REQUEST_CART_RESPONSE:
                 if (data == null || data.getExtras() == null) break;
-                List<ProductItem> list = data.getParcelableArrayListExtra(Intent_Data_Cart_detail);
-                if (list != null) {
-                    synchronized (cartMap) {
-                        syncCartMapFromArrList(list);
-                    }
+                List<ProductItem> list = data.getParcelableArrayListExtra(Intent_Data_Cart_Detail);
+                if (list != null) syncCartMapFromArrList(list);
                     cart_list = list;
                     updateTotalOfCart();
-                }
                 break;
         }
     }
 
+    /**
+     * get hashMap result from list, after screen rotation.
+     * @param list
+     */
+    // Todo: should work on background thread.
     private void syncCartMapFromArrList(List list){
-        synchronized(cartMap) {
             cartMap.clear();
             totalItem = 0;
             for(Iterator it = list.iterator(); it.hasNext(); ) {
@@ -153,10 +169,12 @@ public class MainActivity extends AppCompatActivity {
                 totalItem += item.getQuantity();
             }
         }
-    }
 
+    /**
+     * Update list from map.
+     */
+    // Todo: should work on background thread.
     private void arrangeCartList(){
-        synchronized (cartMap) {
             cart_list.clear();
             totalItem = 0;
             for(int key : cartMap.keySet()) {
@@ -171,7 +189,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-    }
 
     private void updateTotalOfCart(){
         cartBtn.setTitle("("+totalItem+")");
@@ -182,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.i(LOG_TAG, "onReceive: "+intent.getAction());
+            Log.i(LOG_TAG, Thread.currentThread()+"onReceive: "+intent.getAction());
             if (intent.getAction().equals(Action_Cart_Changed)) {
                 int productId = intent.getIntExtra(Intent_Data_ProductId, -1);
                 if(productId == -1) return;
@@ -203,5 +220,62 @@ public class MainActivity extends AppCompatActivity {
                 = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    private class CurrencyDownloadTask extends AsyncTask<Void, Void, HashMap> {
+        protected HashMap doInBackground(Void... urls) {
+            InputStream inputStream = null;
+            String result = "";
+            HttpParams httpParams = new BasicHttpParams();
+            HttpConnectionParams.setConnectionTimeout(httpParams, 3000);
+            HttpConnectionParams.setSoTimeout(httpParams, 7000);//For socket
+            HttpClient httpClient = new DefaultHttpClient(httpParams);
+            try {
+                HttpResponse httpResponse = httpClient.execute(new HttpGet("http://api.fixer.io/latest"));
+                inputStream = httpResponse.getEntity().getContent();
+                if(inputStream != null) result = convertInputStreamToString(inputStream);
+                //Log.i(LOG_TAG, "["+Thread.currentThread()+"] "+result);
+                convertStringToJsonObject(result);
+            } catch(java.io.IOException ioe){;
+                ioe.printStackTrace();
+            } finally {
+                //Log.i(LOG_TAG,"Disconnect");
+                httpClient.getConnectionManager().shutdown();
+            }
+            return null;
+        }
+
+        private String convertInputStreamToString(InputStream inputStream) throws IOException {
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            String line = "", result = "";
+            while((line = bufferedReader.readLine()) != null)
+                result += line;
+            inputStream.close();
+            return result;
+        }
+
+        private void convertStringToJsonObject(String str) {
+            JSONObject json = null;
+            if (str == null || str.length() == 0) return;
+            try {
+                json = new JSONObject(new JSONObject(str).getString("rates"));
+                Iterator<String> keys = json.keys();
+                if(currencyMap.size()>0) currencyMap.clear();
+                while(keys.hasNext()){
+                    String key = (String)keys.next();
+                    double value = json.getDouble(key);
+                    currencyMap.put(key, (float)value);
+                    //Log.i(LOG_TAG,"currencyMap("+currencyMap.size()+"):"+key+"("+value+")");
+                }
+            } catch (JSONException je) {
+                je.printStackTrace();
+            }
+        }
+
+        protected void onProgressUpdate(HashMap... progress) {
+        }
+
+        protected void onPostExecute(HashMap result) {
+        }
     }
 }
