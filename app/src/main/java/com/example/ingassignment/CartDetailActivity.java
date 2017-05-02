@@ -9,6 +9,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -50,7 +51,7 @@ public class CartDetailActivity extends AppCompatActivity {
         Intent intent = getIntent();
         if(intent != null) {
             cart_list = intent.getParcelableArrayListExtra(MainActivity.Intent_Data_Cart_Detail);
-            currencyMap = (HashMap<String, Float>) intent.getSerializableExtra(MainActivity.Intent_Data_Currency_Rate);
+            currencyMap = (HashMap<String,Float>)intent.getSerializableExtra(MainActivity.Intent_Data_Currency_Rate);
         }
         adapter = new CartListAdapter(this.getApplicationContext(),cart_list);
         listView = (ListView) findViewById(R.id.product_listview);
@@ -70,6 +71,20 @@ public class CartDetailActivity extends AppCompatActivity {
                 android.R.layout.simple_spinner_item,
                 currencyCategeory);
         currencySelection.setAdapter(spinnerArrayAdapter);
+        // According to localised country to display default currency.
+        TelephonyManager tm = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+        String countryCode = tm.getNetworkCountryIso();
+        Log.i(LOG_TAG, "localised :"+countryCode);
+        if(!countryCode.isEmpty()){
+            for(int i=0; i<currencyCategeory.length;i++){
+                if(countryCode.toUpperCase().equals(currencyCategeory[i].substring(0,2))){
+                    // Todo: how to more efficient to find locale is existed in map.
+                    currencySelection.setSelection(i);
+                    lastCurrency=currencyCategeory[i];
+                    break;
+                }
+            }
+        }
         currencySelection.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
                 lastCurrency = currencyCategeory[adapterView.getSelectedItemPosition()];
